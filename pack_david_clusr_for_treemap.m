@@ -33,8 +33,17 @@ for i=1:min(length(c),10)
    rec=c(i).getSimpleChartRecords;%get all the terms in the cluster
    %set the nodes size by the number of GO terms, as a % of the max
    d.area=max(1,round(ntm(i)/mntm*10));%1<=dim,area<=10
-   %set the node color as a hex, as a percentage of the largest score 
-   pr=max(1,round(scz(i)/mscz*10));
+   %set the node color as a hex 
+   if scz(i) <=.2, pr=1;
+   elseif scz(i)>.2&&scz(i)<=.4, pr=2;
+   elseif scz(i)>.4&&scz(i)<=.6, pr=3;
+   elseif scz(i)>.6&&scz(i)<=.8, pr=4;
+   elseif scz(i)>.8&&scz(i)<=1, pr=5;
+   elseif scz(i)>1&&scz(i)<=5, pr=6;
+   elseif scz(i)>5&&scz(i)<=10, pr=7;
+   elseif scz(i)>10&&scz(i)<=15, pr=8;
+   elseif scz(i)>15&&scz(i)<=20, pr=9;
+   elseif scz(i)>20, pr=10; end
    d.color = cmp{pr};
    d.score = scz(i);
    %set the cluster name to be the most frequently annotated term
@@ -82,8 +91,17 @@ for i=1:min(length(c),10)
        if exist('d','var'),clear d;end
        %set the size of the node by the number of genes
        d.area=max(1,round(rec(j).getPercent));
-       %set the color by p-value as a % of the minimum
-       pr=max(1,round((1-pvl(j))/mpvl*10));%set color as a % of smallest pval
+       %set the color by p-value
+       if pvl(i) >=.4, pr=1;
+       elseif pvl(i)<.4&&pvl(i)>=.3, pr=2;
+       elseif pvl(i)<.3&&pvl(i)>=.2, pr=3;
+       elseif pvl(i)<.2&&pvl(i)>=0.1, pr=4;
+       elseif pvl(i)<0.1&&pvl(i)>=0.05, pr=5;
+       elseif pvl(i)<0.05&&pvl(i)>=1e-3, pr=6;
+       elseif pvl(i)<1e-3&&pvl(i)>=1e-5, pr=7;
+       elseif pvl(i)<1e-5&&pvl(i)>=1e-7, pr=8;
+       elseif pvl(i)<1e-7&&pvl(i)>=1e-9, pr=9;
+       elseif pvl(i)<1e-9, pr=10; end
        d.color = cmp{pr};
        nm=char(rec(j).getTermName);
        d.gns=char(rec(j).getGeneIds);
@@ -138,7 +156,18 @@ for i=1:min(length(c),10)
                d.pvl=smp.fdr(idx(k));
                d.nsh=smp.nsh(idx(k));
                d.mlodz=smp.mlodz(idx(k));
-               d.color=cmp{max(1,10-floor((d.rank/mxr)*10))};
+               pct=d.rank/max(smp.prank(idx));
+               if pct >=.7, pr=1;
+               elseif pct<.7&&pct>=.6, pr=2;
+               elseif pct<.6&&pct>=.5, pr=3;
+               elseif pct<.5&&pct>=0.4, pr=4;
+               elseif pct<0.4&&pct>=0.3, pr=5;
+               elseif pct<0.3&&pct>=0.2, pr=6;
+               elseif pct<0.2&&pct>=0.1, pr=7;
+               elseif pct<0.1&&pct>=0.05, pr=8;
+               elseif pct<0.05&&pct>=0.01, pr=9;
+               elseif pct<0.01, pr=10; end
+               d.color=cmp{pr};
            end
            if isfield(smp,'fc')&&~isempty(smp.fc)
                d.fc=smp.fc(idx(k));
