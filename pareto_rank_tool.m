@@ -124,11 +124,11 @@ tfdr=zeros(max(rnk),1);
 for i=1:length(tfdr)
     tfdr(i)=1/n+length(find(rnk<=rnk(i)&nrnk<=rnk(i)))/length(find(rnk<=rnk(i)));
 end
-for i=1:length(tfdr),tfdr(i)=min(tfdr(i:end));end %compute q-value
+for i=1:length(tfdr),tfdr(i)=min(tfdr(rnk>=rnk(i)));end %compute q-value
 sample_data.fdr=ones(size(sample_data.mlodz));
 for i=1:length(sample_data.gsymb)
     if ~(sample_data.mlodz(i)<=0||sample_data.nsh(i)<1)
-        sample_data.fdr(i)=tfdr(sample_data.prank(i));
+        sample_data.fdr(i)=tfdr(i);
     end
 end%annotate genes
 waitbar(1,h,'Done!');
@@ -140,13 +140,16 @@ if ~isstr(fname),close(handles.pareto_rank_root);end
 f=fopen(fullfile(pname,fname),'w');
 fprintf(f,'gene\trank\tfdr\teffect_size\t#_active_guide-RNA\n');
 [~,sidx]=sort(sample_data.prank);
-for i=1:length(sample_data.gsymb)
-    fprintf(f,'%s\t',sample_data.gsymb{sidx(i)});
-    fprintf(f,'%i\t',sample_data.prank(sidx(i)));
-    fprintf(f,'%i\t',sample_data.fdr(sidx(i)));
-    fprintf(f,'%g\t',sample_data.mlodz(sidx(i)));
-    fprintf(f,'%i\n',sample_data.nsh(sidx(i)));
-end
+%h=waitbar(0,'Writing results to file...');
+%for i=1:length(sample_data.gsymb)
+%    waitbar(i/length(sample_data.gsymb),h,'Writing results to file...');
+%    fprintf(f,'%s\t',sample_data.gsymb{sidx(i)});
+%    fprintf(f,'%i\t',sample_data.prank(sidx(i)));
+%    fprintf(f,'%i\t',sample_data.fdr(sidx(i)));
+%    fprintf(f,'%g\t',sample_data.mlodz(sidx(i)));
+%    fprintf(f,'%i\n',sample_data.nsh(sidx(i)));
+%end
+%delete(h);
 fclose(f);
 close(handles.pareto_rank_root);
 
