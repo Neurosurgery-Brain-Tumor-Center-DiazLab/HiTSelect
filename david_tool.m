@@ -74,6 +74,8 @@ main_data.vis_dir='';
 main_data.pname=smp.pname;
 main_data.gexp_pcut=smp.gexp_pcut;
 main_data.main_glst=smp.main_glst;
+main_data.glists_textbox=smp.glists_textbox;
+main_data.pareto_gui_root_handle=smp.pareto_gui_root_handle;
 pareto_root_data=get(smp.pareto_gui_root_handle,'UserData');
 if ~pareto_root_data.java_loaded
     h=waitbar(0,'loading java packaes. This only needs to be done once per session.');
@@ -184,50 +186,58 @@ set(handles.glist_textbox,'UserData',gene_data);
 main_data.gene_disp_idx=1:length(gene_data.gsymb);
 clear c;
 pause(0.5);
-if ~isdeployed
-    outdir=uigetdir(main_data.pname,'Please select a directory where I can save your visualizations.');
+if isdeployed,tfl=fullfile(ctfroot,'david_cluster_report.txt');
+else,tfl=fullfile(pwd,'david_cluster_report.txt');end
+f=fopen(tfl);
+[fname pname]=uiputfile(fullfile(main_data.pname,'david_goterm_list.tsv'),'Where should I save your DAVID report?');
+g=fopen(fullfile(pname,fname),'w');
+D=textscan(f,'%s%n%n%s','Delimiter','\t');
+fprintf(g,'Term\tp-value\tPercent_annotated\tGenes\n');
+for i=1:length(D{1})
+    fprintf(g,'%s\t',D{1}{i});
+    fprintf(g,'%g\t',D{2}(i));
+    fprintf(g,'%g\t',D{3}(i));
+    fprintf(g,'%s\n',D{4}{i});
+end
+fclose(f);fclose(g);
+h=waitbar(0.5,'Generating gene ontology visualizaiton');
+[js,err]=make_treemap_json_from_david(x);
+delete(h);
+if err
+    alert('title','Error: out of memory...','string','I ran out of memory trying to generate your visualization. Try again with a smaller gene list');
 else
-    outdir=ctfroot;
-end
-if ~outdir, delete(h);return;end
-main_data.vis_dir=outdir;
-set(handles.david_tool_root,'UserData',main_data);
-h=waitbar(0.25,'Writting javascript files');
-js=make_treemap_json_from_david(x);
-%generate javascripts for the visualization
-unzip(which('david_clustering.zip'),outdir);
-f=fopen(fullfile(outdir,'david_clustering','data.js'),'w');
-fprintf(f,'var json_data = %s;',js);
-fclose(f);
-%load the visualization in a browser
-waitbar(0.75,h,'Spawning web browser')
-if ispc, dos(['start ' fullfile(outdir,'david_clustering','david_treemap.html') ' &']);
-elseif ismac, unix(['open ' fullfile(outdir,'david_clustering','david_treemap.html') ' &']);
-else unix(['firefox ' fullfile(outdir,'david_clustering','david_treemap.html') ' &']);end
-%if requested, write the visualization web-page to a ZIP file
-if get(handles.to_file_radiobutton,'Value')
-    waitbar(0.9,h,'Packaging web files for you to use later')
-    [fname pname]=uiputfile(fullfile(outdir,'david_cluster_report.zip'));
-    t=min(strfind(fname,'.'));
-    if isempty(t),flnm=fname;else,flnm=fname(1:max(1,t-1));end
-    if ispc,dos(['rename ' fullfile(outdir,'david_clustering') ' ' fullfile(outdir,flnm)])
-    else, unix(['mv ' fullfile(outdir,'david_clustering') ' ' fullfile(outdir,flnm)]),end
-    if ~isequal(fname,0)&~isequal(pname,0),zip(fullfile(pname,fname),fullfile(outdir,flnm));end
-    if isdeployed,tfl=fullfile(ctfroot,'david_cluster_report.txt');
-    else,tfl=fullfile(pwd,'david_cluster_report.txt');end
-    f=fopen(tfl);
-    g=fopen(fullfile(pname,[flnm '_goterm_list.tsv']),'w');
-    D=textscan(f,'%s%n%n%s','Delimiter','\t');
-    fprintf(g,'Term\tp-value\tPercent_annotated\tGenes\n');
-    for i=1:length(D{1})
-        fprintf(g,'%s\t',D{1}{i});
-        fprintf(g,'%g\t',D{2}(i));
-        fprintf(g,'%g\t',D{3}(i));
-        fprintf(g,'%s\n',D{4}{i});
+    if ~isdeployed
+        outdir=uigetdir(main_data.pname,'Please select a directory where I can save your visualizations.');
+    else
+        outdir=ctfroot;
     end
-    fclose(f);fclose(g);
+    if ~outdir, delete(h);return;end
+    main_data.vis_dir=outdir;
+    set(handles.david_tool_root,'UserData',main_data);
+    h=waitbar(0.25,'Writting javascript files');
+    %generate javascripts for the visualization
+    unzip(which('david_clustering.zip'),outdir);
+    f=fopen(fullfile(outdir,'david_clustering','data.js'),'w');
+    fprintf(f,'var json_data = %s;',js);
+    fclose(f);
+    %load the visualization in a browser
+    waitbar(0.75,h,'Spawning web browser')
+    if ispc, dos(['start ' fullfile(outdir,'david_clustering','david_treemap.html') ' &']);
+    elseif ismac, unix(['open ' fullfile(outdir,'david_clustering','david_treemap.html') ' &']);
+    else unix(['firefox ' fullfile(outdir,'david_clustering','david_treemap.html') ' &']);end
+    %if requested, write the visualization web-page to a ZIP file
+    if get(handles.to_file_radiobutton,'Value')
+        waitbar(0.9,h,'Packaging web files for you to use later')
+        [fname pname]=uiputfile(fullfile(outdir,'david_cluster_report.zip'));
+        t=min(strfind(fname,'.'));
+        if isempty(t),flnm=fname;else,flnm=fname(1:max(1,t-1));end
+        if ispc,dos(['rename ' fullfile(outdir,'david_clustering') ' ' fullfile(outdir,flnm)])
+        else, unix(['mv ' fullfile(outdir,'david_clustering') ' ' fullfile(outdir,flnm)]),end
+        if ~isequal(fname,0)&~isequal(pname,0),zip(fullfile(pname,fname),fullfile(outdir,flnm));end
+    end
+    delete(h);
 end
-delete(h)
+
 
 % --- Executes on selection change in glist_textbox.
 function glist_textbox_Callback(hObject, eventdata, handles)
@@ -342,7 +352,10 @@ if get(hObject,'Value')
     cur_idx=union(cur_idx,idx);
     t=[];t.gsymb=main_data.gsymb(cur_idx);t.gid=main_data.gid(cur_idx);
     if ~isempty(main_data.fdr)
-        t.fdr=main_data.fdr(cur_idx);t.fc=main_data.fc(cur_idx);
+        t.fdr=main_data.fdr(cur_idx);
+    end
+    if ~isempty(main_data.fc)
+        t.fc=main_data.fc(cur_idx);
     end
     t.gene_clusts=gene_data.gene_clusts;
     set(handles.glist_textbox,'String',main_data.gsymb(cur_idx));
@@ -354,7 +367,10 @@ else
     cur_idx=setdiff(cur_idx,idx);
     t=[];t.gsymb=main_data.gsymb(cur_idx);t.gid=main_data.gid(cur_idx);
     if ~isempty(main_data.fdr)
-        t.fdr=main_data.fdr(cur_idx);t.fc=main_data.fc(cur_idx);
+        t.fdr=main_data.fdr(cur_idx);
+    end
+    if ~isempty(main_data.fc)
+        t.fc=main_data.fc(cur_idx);
     end
     t.gene_clusts=gene_data.gene_clusts;
     set(handles.glist_textbox,'String',main_data.gsymb(cur_idx));
@@ -384,7 +400,10 @@ if get(hObject,'Value')
     cur_idx=union(cur_idx,idx);
     t=[];t.gsymb=main_data.gsymb(cur_idx);t.gid=main_data.gid(cur_idx);
     if ~isempty(main_data.fdr)
-        t.fdr=main_data.fdr(cur_idx);t.fc=main_data.fc(cur_idx);
+        t.fdr=main_data.fdr(cur_idx);
+    end
+    if ~isempty(main_data.fc)
+        t.fc=main_data.fc(cur_idx);
     end
     t.gene_clusts=gene_data.gene_clusts;
     set(handles.glist_textbox,'String',main_data.gsymb(cur_idx));
@@ -396,7 +415,10 @@ else
     cur_idx=setdiff(cur_idx,idx);
     t=[];t.gsymb=main_data.gsymb(cur_idx);t.gid=main_data.gid(cur_idx);
     if ~isempty(main_data.fdr)
-        t.fdr=main_data.fdr(cur_idx);t.fc=main_data.fc(cur_idx);
+        t.fdr=main_data.fdr(cur_idx);
+    end
+    if ~isempty(main_data.fc)
+        t.fc=main_data.fc(cur_idx);
     end
     t.gene_clusts=gene_data.gene_clusts;
     set(handles.glist_textbox,'String',main_data.gsymb(cur_idx));
@@ -426,7 +448,10 @@ if get(hObject,'Value')
     cur_idx=union(cur_idx,idx);
     t=[];t.gsymb=main_data.gsymb(cur_idx);t.gid=main_data.gid(cur_idx);
     if ~isempty(main_data.fdr)
-        t.fdr=main_data.fdr(cur_idx);t.fc=main_data.fc(cur_idx);
+        t.fdr=main_data.fdr(cur_idx);
+    end
+    if ~isempty(main_data.fc)
+        t.fc=main_data.fc(cur_idx);
     end
     t.gene_clusts=gene_data.gene_clusts;
     set(handles.glist_textbox,'String',main_data.gsymb(cur_idx));
@@ -438,7 +463,10 @@ else
     cur_idx=setdiff(cur_idx,idx);
     t=[];t.gsymb=main_data.gsymb(cur_idx);t.gid=main_data.gid(cur_idx);
     if ~isempty(main_data.fdr)
-        t.fdr=main_data.fdr(cur_idx);t.fc=main_data.fc(cur_idx);
+        t.fdr=main_data.fdr(cur_idx);
+    end
+    if ~isempty(main_data.fc)
+        t.fc=main_data.fc(cur_idx);
     end
     t.gene_clusts=gene_data.gene_clusts;
     set(handles.glist_textbox,'String',main_data.gsymb(cur_idx));
@@ -468,7 +496,10 @@ if get(hObject,'Value')
     cur_idx=union(cur_idx,idx);
     t=[];t.gsymb=main_data.gsymb(cur_idx);t.gid=main_data.gid(cur_idx);
     if ~isempty(main_data.fdr)
-        t.fdr=main_data.fdr(cur_idx);t.fc=main_data.fc(cur_idx);
+        t.fdr=main_data.fdr(cur_idx);
+    end
+    if ~isempty(main_data.fc)
+        t.fc=main_data.fc(cur_idx);
     end
     t.gene_clusts=gene_data.gene_clusts;
     set(handles.glist_textbox,'String',main_data.gsymb(cur_idx));
@@ -480,7 +511,10 @@ else
     cur_idx=setdiff(cur_idx,idx);
     t=[];t.gsymb=main_data.gsymb(cur_idx);t.gid=main_data.gid(cur_idx);
     if ~isempty(main_data.fdr)
-        t.fdr=main_data.fdr(cur_idx);t.fc=main_data.fc(cur_idx);
+        t.fdr=main_data.fdr(cur_idx);
+    end
+    if ~isempty(main_data.fc)
+        t.fc=main_data.fc(cur_idx);
     end
     t.gene_clusts=gene_data.gene_clusts;
     set(handles.glist_textbox,'String',main_data.gsymb(cur_idx));
@@ -538,7 +572,10 @@ if get(hObject,'Value')
     cur_idx=union(cur_idx,idx);
     t=[];t.gsymb=main_data.gsymb(cur_idx);t.gid=main_data.gid(cur_idx);
     if ~isempty(main_data.fdr)
-        t.fdr=main_data.fdr(cur_idx);t.fc=main_data.fc(cur_idx);
+        t.fdr=main_data.fdr(cur_idx);
+    end
+    if ~isempty(main_data.fc)
+        t.fc=main_data.fc(cur_idx);
     end
     t.gene_clusts=gene_data.gene_clusts;
     set(handles.glist_textbox,'String',main_data.gsymb(cur_idx));
@@ -550,7 +587,10 @@ else
     cur_idx=setdiff(cur_idx,idx);
     t=[];t.gsymb=main_data.gsymb(cur_idx);t.gid=main_data.gid(cur_idx);
     if ~isempty(main_data.fdr)
-        t.fdr=main_data.fdr(cur_idx);t.fc=main_data.fc(cur_idx);
+        t.fdr=main_data.fdr(cur_idx);
+    end
+    if ~isempty(main_data.fc)
+        t.fc=main_data.fc(cur_idx);
     end
     t.gene_clusts=gene_data.gene_clusts;
     set(handles.glist_textbox,'String',main_data.gsymb(cur_idx));
@@ -580,7 +620,10 @@ if get(hObject,'Value')
     cur_idx=union(cur_idx,idx);
     t=[];t.gsymb=main_data.gsymb(cur_idx);t.gid=main_data.gid(cur_idx);
     if ~isempty(main_data.fdr)
-        t.fdr=main_data.fdr(cur_idx);t.fc=main_data.fc(cur_idx);
+        t.fdr=main_data.fdr(cur_idx);
+    end
+    if ~isempty(main_data.fc)
+        t.fc=main_data.fc(cur_idx);
     end
     t.gene_clusts=gene_data.gene_clusts;
     set(handles.glist_textbox,'String',main_data.gsymb(cur_idx));
@@ -592,7 +635,10 @@ else
     cur_idx=setdiff(cur_idx,idx);
     t=[];t.gsymb=main_data.gsymb(cur_idx);t.gid=main_data.gid(cur_idx);
     if ~isempty(main_data.fdr)
-        t.fdr=main_data.fdr(cur_idx);t.fc=main_data.fc(cur_idx);
+        t.fdr=main_data.fdr(cur_idx);
+    end
+    if ~isempty(main_data.fc)
+        t.fc=main_data.fc(cur_idx);
     end
     t.gene_clusts=gene_data.gene_clusts;
     set(handles.glist_textbox,'String',main_data.gsymb(cur_idx));
@@ -622,7 +668,10 @@ if get(hObject,'Value')
     cur_idx=union(cur_idx,idx);
     t=[];t.gsymb=main_data.gsymb(cur_idx);t.gid=main_data.gid(cur_idx);
     if ~isempty(main_data.fdr)
-        t.fdr=main_data.fdr(cur_idx);t.fc=main_data.fc(cur_idx);
+        t.fdr=main_data.fdr(cur_idx);
+    end
+    if ~isempty(main_data.fc)
+        t.fc=main_data.fc(cur_idx);
     end
     t.gene_clusts=gene_data.gene_clusts;
     set(handles.glist_textbox,'String',main_data.gsymb(cur_idx));
@@ -634,7 +683,10 @@ else
     cur_idx=setdiff(cur_idx,idx);
     t=[];t.gsymb=main_data.gsymb(cur_idx);t.gid=main_data.gid(cur_idx);
     if ~isempty(main_data.fdr)
-        t.fdr=main_data.fdr(cur_idx);t.fc=main_data.fc(cur_idx);
+        t.fdr=main_data.fdr(cur_idx);
+    end
+    if ~isempty(main_data.fc)
+        t.fc=main_data.fc(cur_idx);
     end
     t.gene_clusts=gene_data.gene_clusts;
     set(handles.glist_textbox,'String',main_data.gsymb(cur_idx));
@@ -664,7 +716,10 @@ if get(hObject,'Value')
     cur_idx=union(cur_idx,idx);
     t=[];t.gsymb=main_data.gsymb(cur_idx);t.gid=main_data.gid(cur_idx);
     if ~isempty(main_data.fdr)
-        t.fdr=main_data.fdr(cur_idx);t.fc=main_data.fc(cur_idx);
+        t.fdr=main_data.fdr(cur_idx);
+    end
+    if ~isempty(main_data.fc)
+        t.fc=main_data.fc(cur_idx);
     end
     t.gene_clusts=gene_data.gene_clusts;
     set(handles.glist_textbox,'String',main_data.gsymb(cur_idx));
@@ -674,9 +729,12 @@ if get(hObject,'Value')
 else
     cur_idx=main_data.gene_disp_idx;
     cur_idx=setdiff(cur_idx,idx);
-    t=[];t.gsymb=main_data.gsymb(cur_idx);t.gid=main_data.gid(cur_idx);
+    t=[];t.gsymb=main_data.gsymb(cur_idx);
     if ~isempty(main_data.fdr)
-        t.fdr=main_data.fdr(cur_idx);t.fc=main_data.fc(cur_idx);
+        t.fdr=main_data.fdr(cur_idx);
+    end
+    if ~isempty(main_data.fc)
+        t.fc=main_data.fc(cur_idx);
     end
     t.gene_clusts=gene_data.gene_clusts;
     set(handles.glist_textbox,'String',main_data.gsymb(cur_idx));
@@ -706,7 +764,10 @@ if get(hObject,'Value')
     cur_idx=union(cur_idx,idx);
     t=[];t.gsymb=main_data.gsymb(cur_idx);t.gid=main_data.gid(cur_idx);
     if ~isempty(main_data.fdr)
-        t.fdr=main_data.fdr(cur_idx);t.fc=main_data.fc(cur_idx);
+        t.fdr=main_data.fdr(cur_idx);
+    end
+    if ~isempty(main_data.fc)
+        t.fc=main_data.fc(cur_idx);
     end
     t.gene_clusts=gene_data.gene_clusts;
     set(handles.glist_textbox,'String',main_data.gsymb(cur_idx));
@@ -718,7 +779,10 @@ else
     cur_idx=setdiff(cur_idx,idx);
     t=[];t.gsymb=main_data.gsymb(cur_idx);t.gid=main_data.gid(cur_idx);
     if ~isempty(main_data.fdr)
-        t.fdr=main_data.fdr(cur_idx);t.fc=main_data.fc(cur_idx);
+        t.fdr=main_data.fdr(cur_idx);
+    end
+    if ~isempty(main_data.fc)
+        t.fc=main_data.fc(cur_idx);
     end
     t.gene_clusts=gene_data.gene_clusts;
     set(handles.glist_textbox,'String',main_data.gsymb(cur_idx));
@@ -748,7 +812,10 @@ if get(hObject,'Value')
     cur_idx=union(cur_idx,idx);
     t=[];t.gsymb=main_data.gsymb(cur_idx);t.gid=main_data.gid(cur_idx);
     if ~isempty(main_data.fdr)
-        t.fdr=main_data.fdr(cur_idx);t.fc=main_data.fc(cur_idx);
+        t.fdr=main_data.fdr(cur_idx);
+    end
+    if ~isempty(main_data.fc)
+        t.fc=main_data.fc(cur_idx);
     end
     t.gene_clusts=gene_data.gene_clusts;
     set(handles.glist_textbox,'String',main_data.gsymb(cur_idx));
@@ -760,7 +827,10 @@ else
     cur_idx=setdiff(cur_idx,idx);
     t=[];t.gsymb=main_data.gsymb(cur_idx);t.gid=main_data.gid(cur_idx);
     if ~isempty(main_data.fdr)
-        t.fdr=main_data.fdr(cur_idx);t.fc=main_data.fc(cur_idx);
+        t.fdr=main_data.fdr(cur_idx);
+    end
+    if ~isempty(main_data.fc)
+        t.fc=main_data.fc(cur_idx);
     end
     t.gene_clusts=gene_data.gene_clusts;
     set(handles.glist_textbox,'String',main_data.gsymb(cur_idx));
@@ -919,7 +989,17 @@ function export_gene_list_Callback(hObject, eventdata, handles)
 
 main_data=get(handles.david_tool_root,'UserData');
 glst_ids=get(handles.glist_textbox,'String');
-set(main_data.main_glst,'String',glst_ids,'UserData',glst_ids);
+set(main_data.main_glst,'String',glst_ids,'UserData',glst_ids,'Value',1);
+glists=get(main_data.glists_textbox,'UserData');%gene lists textbox in main gui
+glists_names=get(main_data.glists_textbox,'String');%names of gene lists in the main gui's gene lists textbox
+lst_name=set_sample_id('title','Enter gene list ID:','string',sprintf(['Enter a name for the new gene list.']));
+glists{end+1}=glst_ids;
+if isempty(lst_name)||strcmp(lst_name,'Yes')
+    glists_names{end+1}=['new_list' num2str(length(glists_names))];
+else
+    glists_names{end+1}=lst_name;
+end
+set(main_data.glists_textbox,'UserData',glists,'String',glists_names);
 
 % --- Executes during object creation, after setting all properties.
 function query_david_pushbutton_CreateFcn(hObject, eventdata, handles)

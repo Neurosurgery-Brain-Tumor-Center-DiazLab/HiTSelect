@@ -501,19 +501,18 @@ function export_gene_list_Callback(hObject, eventdata, handles)
 main_data=get(handles.pareto_plt_gui_root,'UserData');
 glst=get(handles.working_gene_list,'String');
 glst_ids=get(handles.working_gene_list,'UserData');
-main_glst=get(handles.main_glst,'String');
+main_glst=get(handles.main_glst,'String');%working gene list in main gui
 main_glst_ids=get(handles.main_glst,'UserData');
-glists=get(main_data.glists_textbox,'UserData');
-v=get(main_data.glists_textbox,'Value');
-if ~isempty(v), glists{v}=glst_ids; end
-set(main_data.glists_textbox,'UserData',glists);
-%%%This would have augmented the main gene list 
-%for i=1:length(glst_ids)
-%   if ~any(strcmpi(glst_ids{i},main_glst_ids))
-%       main_glst_ids{end+1}=glst_ids{i};
-%       main_glst{end+1}=glst{i};
-%   end
-%end
+glists=get(main_data.glists_textbox,'UserData');%gene lists textbox in main gui
+glists_names=get(main_data.glists_textbox,'String');%names of gene lists in the main gui's gene lists textbox
+lst_name=set_sample_id('title','Enter gene list ID:','string',sprintf(['Enter a name for the new gene list.']));
+glists{end+1}=glst_ids;
+if isempty(lst_name)||strcmp(lst_name,'Yes')
+    glists_names{end+1}=['new_list' num2str(length(glists_names))];
+else
+    glists_names{end+1}=lst_name;
+end
+set(main_data.glists_textbox,'UserData',glists,'String',glists_names);
 set(handles.main_glst,'String',glst_ids,'UserData',glst_ids,'Value',1);
 
 

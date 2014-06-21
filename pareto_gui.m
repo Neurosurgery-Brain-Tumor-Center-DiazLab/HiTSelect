@@ -52,17 +52,18 @@ function pareto_gui_OpeningFcn(hObject, eventdata, handles, varargin)
 % handles    structure with handles and user data (see GUIDATA)
 % varargin   command line arguments to pareto_gui (see VARARGIN)
 
-%splash('*.png')
+main_data=get(handles.root_window,'UserData');
+main_data.java_loaded=0;
+main_data.GO=[];
+set(handles.root_window,'UserData',main_data);
+splash('hit.png')
 
 % Choose default command line output for pareto_gui
 handles.output = hObject;
 
 % Update handles structure
 guidata(hObject, handles);
-main_data=get(handles.root_window,'UserData');
-main_data.java_loaded=0;
-main_data.GO=[];
-set(handles.root_window,'UserData',main_data);
+
 %M=imread('pareto.jpg','jpg');
 %image(M,'Parent',handles.axes1);
 %set(handles.axes1,'ytick',[],'xtick',[]);
@@ -550,12 +551,11 @@ function gene_lists_Callback(hObject, eventdata, handles)
 glists_data=get(hObject,'UserData');%get gene lists data
 glists_names=get(hObject,'String');%get the name of all the gene lists
 idx=get(hObject,'Value');
-if ~isempty(idx)
+if ~isempty(idx)&&~isempty(glists_names)
     set(handles.working_gene_listbox,'String',glists_data{idx},'UserData',glists_data{idx},'Value',1);
 else
     set(handles.working_gene_listbox,'String',{},'UserData',{},'Value',1);
 end
-
 
 
 % --- Executes during object creation, after setting all properties.
@@ -579,12 +579,15 @@ function new_list_pushbutton_Callback(hObject, eventdata, handles)
 
 glists_data=get(handles.gene_lists,'UserData');%get gene lists data
 glists_names=get(handles.gene_lists,'String');%get the name of all the gene lists
-glists_data{end+1}={};
+glists_data{end+1}=get(handles.working_gene_listbox,'UserData');
 lst_name=set_sample_id('title','Enter gene list ID:','string',sprintf(['Enter a name for the gene list.']));
-if isempty(lst_name),glists_names{end+1}=['new_list' num2str(length(glists_names))];
-else,glists_names{end+1}=lst_name;end
+if isempty(lst_name)||strcmp(lst_name,'Yes')
+    glists_names{end+1}=['new_list' num2str(length(glists_names))];
+else
+    glists_names{end+1}=lst_name;
+end
 set(handles.gene_lists,'UserData',glists_data,'String',glists_names,'Value',length(glists_names));
-set(handles.working_gene_listbox,'UserData',{},'String',{});
+%set(handles.working_gene_listbox,'UserData',{},'String',{});
 
 % --- Executes on button press in delete_list_pushbutton.
 function delete_list_pushbutton_Callback(hObject, eventdata, handles)
