@@ -220,7 +220,7 @@ elseif strcmp(smp_info.sample_type,'Gene expression data')
     f=fopen(fullfile(pname,fname));
     %the assumed format is TSV with fields: gene_name fold_change p-value
     %gene_name is a string, fold_change and p-value are doubles
-    D=textscan(f,'%s%n%n');
+    D=textscan(f,'%s%n%n','HeaderLines',1);
     h=waitbar(0,'annotating your screen data...');
     for i=1:length(D{1})
         waitbar(i/length(D{1}),h,'annotating your screen data...');

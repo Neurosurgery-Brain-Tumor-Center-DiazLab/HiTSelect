@@ -22,7 +22,7 @@ function varargout = pareto_plt_gui(varargin)
 
 % Edit the above text to modify the response to help pareto_plt_gui
 
-% Last Modified by GUIDE v2.5 13-May-2014 12:16:08
+% Last Modified by GUIDE v2.5 05-Jul-2014 15:07:33
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -244,13 +244,22 @@ function select_genes_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 if ~ishandle(handles.ax), return; end
+jFigPeer = get(handle(gcf),'JavaFrame');
+jWindow = jFigPeer.fHG1Client.getWindow;
 title(handles.ax,sprintf(['Click or drag-click to add genes to the working list\n'...
                             'Ctrl+click or ctrl+drag-click to remove them\n'...
                             'Press enter key when done']),'FontSize',12)
 main_data=get(handles.pareto_plt_gui_root,'UserData');
 pdata=main_data.pdata;
 figure(handles.f);
+set(handles.f,'WindowStyle','modal');
+%jf=get(get(handles.f,'JavaFrame'),'FigurePanelContainer');
+%jf.getComponent(0).getRootPane.getTopLevelAncestor.setAlwaysOnTop(1);
+%jWindow.setEnabled(false);
 h=gname_pareto(pdata.lbls(main_data.oidx),[],pdata);
+set(handles.f,'WindowStyle','normal');
+%jf.getComponent(0).getRootPane.getTopLevelAncestor.setAlwaysOnTop(0);
+%jWindow.setEnabled(true);
 if isempty(h),return;
 else,title(handles.ax,'');end
 %glst=get(handles.working_gene_list,'String');
@@ -351,9 +360,9 @@ glst_ids{end+1}=gn;
 set(handles.gene_symbol,'String',gn);
 set(handles.rank,'String',num2str(pdata.prank(idx)));
 if pdata.fdr(idx)<=0.05
-    set(handles.fdr,'String',num2str(pdata.fdr(idx)),'ForegroundColor','r');
+    set(handles.screen_fdr,'String',num2str(pdata.fdr(idx)),'ForegroundColor','r');
 else
-    set(handles.fdr,'String',num2str(pdata.fdr(idx)),'ForegroundColor','k');
+    set(handles.screen_fdr,'String',num2str(pdata.fdr(idx)),'ForegroundColor','k');
 end
 set(handles.nsh_textbox,'String',num2str(pdata.xdat(idx)));
 set(handles.mlodz_textbox,'String',num2str(pdata.ydat(idx)));
@@ -544,3 +553,11 @@ function gene_rank_cutoff_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+
+% --- Executes on button press in clear_gene_list_pushbutton.
+function clear_gene_list_pushbutton_Callback(hObject, eventdata, handles)
+% hObject    handle to clear_gene_list_pushbutton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+set(handles.working_gene_list,'String','Add genes to the list','UserData',[]);

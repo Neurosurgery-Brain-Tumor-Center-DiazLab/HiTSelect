@@ -22,7 +22,7 @@ function varargout = genemania_tool(varargin)
 
 % Edit the above text to modify the response to help genemania_tool
 
-% Last Modified by GUIDE v2.5 13-May-2014 16:10:02
+% Last Modified by GUIDE v2.5 30-Jun-2014 12:06:23
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -65,7 +65,7 @@ catch me
     main_data.numc=2;
 end
 %set Genemania preferences
-main_data.genemania_data_dir='gmdata-2012-08-02';
+main_data.genemania_data_dir=fullfile(pwd,'gmdata-2012-08-02');
 main_data.output_format='flat';
 main_data.rel_gene_limit=0;
 main_data.output_dir=pwd;
@@ -440,4 +440,31 @@ function cyto_exe_path_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+end
+
+
+
+function gmloc_textbox_Callback(hObject, eventdata, handles)
+% hObject    handle to gmloc_textbox (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of gmloc_textbox as text
+%        str2double(get(hObject,'String')) returns contents of gmloc_textbox as a double
+main_data=get(handles.genemania_tool_root,'UserData');
+main_data.genemania_data_dir=get(hObject,'String');
+end
+
+% --- Executes during object creation, after setting all properties.
+function gmloc_textbox_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to gmloc_textbox (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+set(hObject,'String',fullfile(pwd,'gmdata-2012-08-02'));
 end

@@ -136,20 +136,20 @@ waitbar(1,h,'Done!');
 set(main_data.sample_list,'UserData',sample_data);
 delete(h);
 [fname,pname]=uiputfile('screen_results.tsv','Select a file to write to...');
-if ~isstr(fname),close(handles.pareto_rank_root);end
+if ~isstr(fname)|isempty(fname),close(handles.pareto_rank_root);end
 f=fopen(fullfile(pname,fname),'w');
 fprintf(f,'gene\trank\tfdr\teffect_size\t#_active_guide-RNA\n');
 [~,sidx]=sort(sample_data.prank);
-%h=waitbar(0,'Writing results to file...');
-%for i=1:length(sample_data.gsymb)
-%    waitbar(i/length(sample_data.gsymb),h,'Writing results to file...');
-%    fprintf(f,'%s\t',sample_data.gsymb{sidx(i)});
-%    fprintf(f,'%i\t',sample_data.prank(sidx(i)));
-%    fprintf(f,'%i\t',sample_data.fdr(sidx(i)));
-%    fprintf(f,'%g\t',sample_data.mlodz(sidx(i)));
-%    fprintf(f,'%i\n',sample_data.nsh(sidx(i)));
-%end
-%delete(h);
+h=waitbar(0,'Writing results to file...');
+for i=1:length(sample_data.gsymb)
+    waitbar(i/length(sample_data.gsymb),h,'Writing results to file...');
+    fprintf(f,'%s\t',sample_data.gsymb{sidx(i)});
+    fprintf(f,'%i\t',sample_data.prank(sidx(i)));
+    fprintf(f,'%i\t',sample_data.fdr(sidx(i)));
+    fprintf(f,'%g\t',sample_data.mlodz(sidx(i)));
+    fprintf(f,'%i\n',sample_data.nsh(sidx(i)));
+end
+delete(h);
 fclose(f);
 close(handles.pareto_rank_root);
 

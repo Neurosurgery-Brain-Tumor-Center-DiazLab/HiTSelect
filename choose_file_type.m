@@ -53,7 +53,9 @@ function choose_file_type_OpeningFcn(hObject, eventdata, handles, varargin)
 
 % Choose default command line output for choose_file_type
 handles.output = [];
-
+handles.output.num_treat=1;
+handles.output.num_ctr=1;
+handles.output.build='hg19';
 % Update handles structure
 guidata(hObject, handles);
 
