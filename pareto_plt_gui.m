@@ -560,4 +560,24 @@ function clear_gene_list_pushbutton_Callback(hObject, eventdata, handles)
 % hObject    handle to clear_gene_list_pushbutton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-set(handles.working_gene_list,'String','Add genes to the list','UserData',[]);
+
+glst=get(handles.working_gene_list,'String');
+glst_ids=get(handles.working_gene_list,'UserData');
+if isempty(glst_ids),return;end
+h = findobj(handles.ax,'Type','text','Tag','gname');
+for j=1:length(glst_ids)
+    if isempty(h), break;end
+    i=1;
+    while i<=length(h)
+        if ~ishandle(h(i))
+            i=i+1;
+            continue; 
+        end
+        if strcmp(get(h(i),'String'),glst_ids{j}),break;end;
+        i=i+1;
+    end
+    if ~isempty(h)&i>0&i<=length(h),delete(h(i));end
+end
+set(handles.working_gene_list,'String',{'Add genes to the list'},'UserData',{});
+set(handles.working_gene_list,'Value',1);
+

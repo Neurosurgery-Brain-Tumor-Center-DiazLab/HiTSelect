@@ -38,7 +38,7 @@ else
     cases = gn(idx);
 end
 if (nargin < 2), line_handle = []; end
-figh = gcf;
+figh =gcf;
 
 % Can't do this if another mouse mode is active
 hManager = uigetmodemanager(figh);
@@ -78,8 +78,8 @@ function [h,dolengthwng]=gnamesub(dolengthwng,cases,line_handle,x0,y0,x1,y1,pdat
 % If no line handles supplied, get lines that appear to be plots of
 % data rather than fits.  (See the lsline function.)
 h = [];
-axesh = gca;
 figh = gcf;
+axesh = gca;
 
 % If the current axes contains the result of a scatter() function call,
 % obtain the collection of objects that correspond to the plotted points.
@@ -352,8 +352,9 @@ end;
 if (isempty(x) || isequal(key, 27))
    return;
 end
-a0 = gca;
 figh = gcf;
+a0 = gca;
+
 a = findobj(figh, 'Type', 'axes');
 pt0 = get(a0, 'CurrentPoint');   % point at mouse down, current axes
 pts0 = get(a, 'CurrentPoint');   % ditto, all axes

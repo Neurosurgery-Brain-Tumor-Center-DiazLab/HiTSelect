@@ -60,7 +60,6 @@ if ~strcmp(tp,'none') && ~strcmp(tp,'x') && ~strcmp(tp,'micro'),
 else
     
     fig = gcf;
-    figure(gcf);
     
     if nargin == 0
         how_many = -1;
@@ -191,7 +190,7 @@ waserr = 0;
 try
     h=findall(fig,'Type','uimenu','Accelerator','C');   % Disabling ^C for edit menu so the only ^C is for
     set(h,'Accelerator','');                            % interrupting the function.
-    fh=@(varargin) mouse_mv_callback([],pdata);%disp(sprintf('%d %d',get(gcf,'currentpoint')));
+    fh=@(varargin) mouse_mv_callback([],pdata);%disp(sprintf('%d %d',get(pltfg,'currentpoint')));
     set(gcf,'windowbuttonmotionfcn',fh);
     keydown = waitforbuttonpress;
     current_char = double(get(fig,'CurrentCharacter')); % Capturing the character.

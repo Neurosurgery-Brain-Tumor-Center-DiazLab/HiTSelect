@@ -23,7 +23,7 @@ function [gsymb,sid,tcnt,ccnt,uniq_locs]=load_read_counts(fname,nt,nc)
 h=waitbar(0.25,['reading ' regexprep(fname,'_','\\_') '...']);
 f=fopen(fname);
 s='%s%s';for i=1:(nt+nc), s=[s,'%n']; end
-E=textscan(f,s,'Delimiter','\t','CommentStyle','#');
+E=textscan(f,s,'Delimiter','\t','CommentStyle','#','HeaderLines',1);
 flg=1;for i=1:length(E)-1, flg=flg&&length(E{i})==length(E{i+1});end
 if ~flg
     delete(h)
