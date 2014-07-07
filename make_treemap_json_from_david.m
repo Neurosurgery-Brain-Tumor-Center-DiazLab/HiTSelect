@@ -16,15 +16,21 @@ function [js,err]=make_treemap_json_from_david(x)
 %set up the parent node x, to be a summary of the gene list
 
 err=0;
-addpath('./json');
-javaaddpath('./JSON-java.jar');
+if isdeployed, addpath(fullfile(ctfroot,'json'));
+else, addpath(fullfile(pwd,'json'));end
+if isdeployed,javaaddpath(fullfile(ctfroot,'JSON-java.jar'));
+else, javaaddpath(fullfile(pwd,'JSON-java.jar'));end
+%addpath('./json');
+%javaaddpath('./JSON-java.jar');
 try 
     js=JSON.dump(x);
 catch me
     err=1; js=[];
     return;
 end
-javarmpath('./JSON-java.jar');
+if isdeployed,javarmpath(fullfile(ctfroot,'HiTSelect','JSON-java.jar'));
+else, javarmpath(fullfile(pwd,'JSON-java.jar'));end
+%javarmpath('./JSON-java.jar');
 js=strrep(js,'area','$area');%the $ prefix is needed by the Jit treemap code
 js=strrep(js,'dim','$dim');
 js=strrep(js,'color','$color');

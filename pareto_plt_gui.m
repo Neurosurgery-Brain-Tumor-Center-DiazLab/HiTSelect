@@ -22,7 +22,7 @@ function varargout = pareto_plt_gui(varargin)
 
 % Edit the above text to modify the response to help pareto_plt_gui
 
-% Last Modified by GUIDE v2.5 05-Jul-2014 15:07:33
+% Last Modified by GUIDE v2.5 07-Jul-2014 12:37:49
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -252,12 +252,12 @@ title(handles.ax,sprintf(['Click or drag-click to add genes to the working list\
 main_data=get(handles.pareto_plt_gui_root,'UserData');
 pdata=main_data.pdata;
 figure(handles.f);
-set(handles.f,'WindowStyle','modal');
+set(handles.f,'WindowStyle','modal','CloseRequestFcn','');
 %jf=get(get(handles.f,'JavaFrame'),'FigurePanelContainer');
 %jf.getComponent(0).getRootPane.getTopLevelAncestor.setAlwaysOnTop(1);
 %jWindow.setEnabled(false);
 h=gname_pareto(pdata.lbls(main_data.oidx),[],pdata);
-set(handles.f,'WindowStyle','normal');
+set(handles.f,'WindowStyle','normal','CloseRequestFcn','closereq');
 %jf.getComponent(0).getRootPane.getTopLevelAncestor.setAlwaysOnTop(0);
 %jWindow.setEnabled(true);
 if isempty(h),return;
@@ -301,9 +301,17 @@ else
     glst_new=glst(1:idx-1);for i=idx+1:n,glst_new{end+1}=glst{i};end
     set(handles.working_gene_list,'String',glst_new,'UserData',glst_ids_new);
 end
-h = findobj(handles.ax,'Type','text','Tag','gname');
-i=1;while i<=length(h),if strcmp(get(h(i),'String'),gn),break;end;i=i+1;end
-if ~isempty(h)&i>0&i<=length(h),delete(h(i));end
+if ishandle(handles.ax)
+    h = findobj(handles.ax,'Type','text','Tag','gname');
+    i=1;
+    while i<=length(h)
+        if strcmp(get(h(i),'String'),gn)
+            break;
+        end;
+        i=i+1;
+    end
+    if ~isempty(h)&i>0&i<=length(h),delete(h(i));end
+end
 set(handles.working_gene_list,'Value',1);
 
 
@@ -564,20 +572,21 @@ function clear_gene_list_pushbutton_Callback(hObject, eventdata, handles)
 glst=get(handles.working_gene_list,'String');
 glst_ids=get(handles.working_gene_list,'UserData');
 if isempty(glst_ids),return;end
-h = findobj(handles.ax,'Type','text','Tag','gname');
-for j=1:length(glst_ids)
-    if isempty(h), break;end
-    i=1;
-    while i<=length(h)
-        if ~ishandle(h(i))
+if ishandle(handles.ax)
+    h = findobj(handles.ax,'Type','text','Tag','gname');
+    for j=1:length(glst_ids)
+        if isempty(h), break;end
+        i=1;
+        while i<=length(h)
+            if ~ishandle(h(i))
+                i=i+1;
+                continue; 
+            end
+            if strcmp(get(h(i),'String'),glst_ids{j}),break;end;
             i=i+1;
-            continue; 
         end
-        if strcmp(get(h(i),'String'),glst_ids{j}),break;end;
-        i=i+1;
+        if ~isempty(h)&i>0&i<=length(h),delete(h(i));end
     end
-    if ~isempty(h)&i>0&i<=length(h),delete(h(i));end
 end
 set(handles.working_gene_list,'String',{'Add genes to the list'},'UserData',{});
 set(handles.working_gene_list,'Value',1);
-

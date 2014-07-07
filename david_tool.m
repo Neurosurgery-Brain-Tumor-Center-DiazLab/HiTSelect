@@ -308,7 +308,11 @@ function register_david_pushbutton_Callback(hObject, eventdata, handles)
 % hObject    handle to register_david_pushbutton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-web('http://david.abcc.ncifcrf.gov/webservice/register.htm')
+
+if ispc, dos('start http://david.abcc.ncifcrf.gov/webservice/register.htm');
+elseif ismac, unix('open http://david.abcc.ncifcrf.gov/webservice/register.htm');
+else unix('firefox http://david.abcc.ncifcrf.gov/webservice/register.htm');end
+
 
 % --- Executes on button press in to_file_radiobutton.
 function to_file_radiobutton_Callback(hObject, eventdata, handles)
@@ -857,11 +861,13 @@ else
         glist_data.gsymb(j)=glist_data_old.gsymb(i);
         if isfield(glist_data_old,'fdr')&&~isempty(glist_data_old.fdr)
             glist_data.fdr(j)=glist_data_old.fdr(i);
-            glist_data.fc(j)=glist_data_old.fc(i);
+            if isfield(glist_data,'fc')&&~isempty(glist_data.fc)
+                glist_data.fc(j)=glist_data_old.fc(i);
+                glist_data.tt(j)=glist_data_old.tt(i);
+            end
             glist_data.prank(j)=glist_data_old.prank(i);
             glist_data.nsh(j)=glist_data_old.nsh(i);
             glist_data.mlodz(j)=glist_data_old.mlodz(i);
-            glist_data.tt(j)=glist_data_old.tt(i);
         end
         glist{j}=glist_old{i};
         j=j+1;
@@ -871,11 +877,13 @@ else
         glist_data.gsymb(j)=glist_data_old.gsymb(i);
         if isfield(glist_data_old,'fdr')&&~isempty(glist_data_old.fdr)
             glist_data.fdr(j)=glist_data_old.fdr(i);
-            glist_data.fc(j)=glist_data_old.fc(i);
+            if isfield(glist_data,'fc')&&~isempty(glist_data.fc)
+                glist_data.fc(j)=glist_data_old.fc(i);
+                glist_data.tt(j)=glist_data_old.tt(i);
+            end
             glist_data.prank(j)=glist_data_old.prank(i);
             glist_data.nsh(j)=glist_data_old.nsh(i);
             glist_data.mlodz(j)=glist_data_old.mlodz(i);
-            glist_data.tt(j)=glist_data_old.tt(i)
         end
         glist{j}=glist_old{i};
         j=j+1;
@@ -963,7 +971,7 @@ if ~isempty(idx)
         set(handles.screen_fdr_textbox,'String',num2str(gene_data.fdr(idx)),'ForegroundColor','k');
     end
     set(handles.nsh_textbox,'String',num2str(gene_data.nsh(idx)));
-    if gene_data.tt(idx)==-1,
+    if ~isfield(gene_data,'tt')||gene_data.tt(idx)==-1,
         set(handles.ttest_textbox,'String','NA');
         set(handles.exp_fc_textbox,'String','NA');    
     else
