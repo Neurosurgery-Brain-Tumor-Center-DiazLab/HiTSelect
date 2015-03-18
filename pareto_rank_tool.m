@@ -22,7 +22,7 @@ function varargout = pareto_rank_tool(varargin)
 
 % Edit the above text to modify the response to help pareto_rank_tool
 
-% Last Modified by GUIDE v2.5 07-May-2014 17:42:22
+% Last Modified by GUIDE v2.5 18-Mar-2015 11:58:09
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -101,7 +101,7 @@ if strcmp(main_data.norm,'uc')
     %the assumed format is TSV with fields: norm_seq_grp norm_seq_id
     %control_read_count treatment_read_count
     %norm_seq_grp and norm_seq_id are strings and read_count is numeric
-    D=textscan(f,'%s%s%n%n');
+    D=textscan(f,'%s%s%n%n','Delimiter','\t','CommentStyle','#','HeaderLines',1);
     fclose(f);
     tmed=median(D{4});
     cmed=median(D{3}*sdsf);
@@ -110,15 +110,23 @@ if strcmp(main_data.norm,'uc')
     delete(h)
 end
 h=waitbar(0.25,'Computing ranking...');
-matlabpool
-[~,~,rnk,mlodz,nsh,ntar,ndes] = pareto_rank_par(pc,nc,n,sample_data.uniq_locs);
+slt=get(handles.memory_menu,'Value');
+if slt~=3
+    clus=parcluster('local');
+    nw=clus.NumWorkers;
+    if slt==2, parpool(max(1,floor(nw/2)));
+    else, parpool; end
+    [~,~,rnk,mlodz,nsh,ntar,ndes] = pareto_rank_par(pc,nc,n,sample_data.uniq_locs);
+else
+    [~,~,rnk,mlodz,nsh,ntar,ndes] = pareto_rank(pc,nc,n,sample_data.uniq_locs);
+end
 sample_data.prank=rnk;sample_data.mlodz=mlodz;
 sample_data.nsh=nsh;sample_data.ntar=ntar;
 sample_data.ndes=ndes;
 %library swap for FDR estimate
 waitbar(0.5,h,'Performing library swap...');
 [~,~,nrnk,~,~,~,~] = pareto_rank_par(nc,pc,n,sample_data.uniq_locs);
-matlabpool close
+delete(gcp('nocreate'));
 waitbar(0.75,h,'Computing FDR...');
 tfdr=zeros(max(rnk),1);
 for i=1:length(tfdr)
@@ -182,3 +190,26 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 set(hObject,'String',{'Sequencing depth (default)','User control sequences'});
+
+
+% --- Executes on selection change in memory_menu.
+function memory_menu_Callback(hObject, eventdata, handles)
+% hObject    handle to memory_menu (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns memory_menu contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from memory_menu
+
+
+% --- Executes during object creation, after setting all properties.
+function memory_menu_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to memory_menu (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
